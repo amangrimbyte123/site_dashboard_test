@@ -1,26 +1,46 @@
 import { NextResponse } from 'next/server';
+import fs from 'fs/promises';
+import path from 'path';
 
 export async function POST(request: Request) {
   try {
     const newData = await request.json();
+    const filePath = path.join(process.cwd(), 'components/Content/ContactInfo.json');
     
-    // Validate the new data
-    if (!newData || typeof newData !== 'object') {
+    try {
+      // Read existing data
+      const fileContent = await fs.readFile(filePath, 'utf-8');
+      const existingData = JSON.parse(fileContent);
+      
+      // Validate the new data
+      if (!newData || typeof newData !== 'object') {
+        return NextResponse.json(
+          { error: 'Invalid data format' },
+          { status: 400 }
+        );
+      }
+
+      // Merge the new data with existing data
+      const updatedData = {
+        ...existingData,
+        ...newData
+      };
+      
+      // Write the updated data back to the file
+      await fs.writeFile(filePath, JSON.stringify(updatedData, null, 2), 'utf-8');
+      
+      return NextResponse.json({ 
+        success: true,
+        message: 'Contact information updated successfully',
+        data: updatedData
+      });
+    } catch (fileError) {
+      console.error('Error handling file operations:', fileError);
       return NextResponse.json(
-        { error: 'Invalid data format' },
-        { status: 400 }
+        { error: 'Failed to update contact information. Please try again.' },
+        { status: 500 }
       );
     }
-
-    // In a production environment, you would update these values in your deployment platform
-    // For Vercel, you would update them in the Vercel dashboard or using the Vercel CLI
-    console.log('Contact information update requested:', newData);
-    
-    return NextResponse.json({ 
-      success: true,
-      message: 'Contact information update request received. Please update the values in your deployment platform.',
-      data: newData
-    });
   } catch (error) {
     console.error('Error processing request:', error);
     return NextResponse.json(
