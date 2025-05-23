@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs/promises';
+import fs from 'fs';
 import path from 'path';
 
 export async function POST(request: Request) {
@@ -9,7 +9,7 @@ export async function POST(request: Request) {
     
     try {
       // Read existing data
-      const fileContent = await fs.readFile(filePath, 'utf-8');
+      const fileContent = fs.readFileSync(filePath, 'utf-8');
       const existingData = JSON.parse(fileContent);
       
       // Validate the new data
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
       };
       
       // Write the updated data back to the file
-      await fs.writeFile(filePath, JSON.stringify(updatedData, null, 2), 'utf-8');
+      fs.writeFileSync(filePath, JSON.stringify(updatedData, null, 2), 'utf-8');
       
       return NextResponse.json({ 
         success: true,

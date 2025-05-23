@@ -61,8 +61,11 @@ export default function Dashboard() {
       if (response.ok) {
         const data = await response.json();
         setContactInfo(data);
+      } else {
+        throw new Error('Failed to fetch contact information');
       }
     } catch (error) {
+      console.error('Error fetching contact info:', error);
       alert('Failed to fetch contact information');
     }
   };
@@ -75,7 +78,8 @@ export default function Dashboard() {
     setHasChanges(true);
   };
 
-  const handleContactInfoSubmit = async () => {
+  const handleContactInfoSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     try {
       setIsLoading(true);
       const response = await fetch('/api/update-contact-info', {
@@ -92,17 +96,12 @@ export default function Dashboard() {
         throw new Error(data.error || 'Failed to update contact information');
       }
 
-      if (data.success) {
-        alert('Contact information updated successfully');
-        setHasChanges(false);
-        // Refresh the contact info to ensure we have the latest data
-        await fetchContactInfo();
-      } else {
-        throw new Error('Update operation did not complete successfully');
-      }
+      alert('Contact information updated successfully');
+      setHasChanges(false);
+      await fetchContactInfo();
     } catch (error) {
       console.error('Update error:', error);
-      alert(error instanceof Error ? error.message : 'Failed to update contact information. Please try again.');
+      alert(error instanceof Error ? error.message : 'Failed to update contact information');
     } finally {
       setIsLoading(false);
     }
@@ -147,7 +146,7 @@ export default function Dashboard() {
       </div>
 
       {/* Contact Information Section */}
-      <div className="bg-white rounded-lg shadow-lg p-6">
+      <form onSubmit={handleContactInfoSubmit} className="bg-white rounded-lg shadow-lg p-6">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-800">Contact Information</h1>
         </div>
@@ -245,7 +244,7 @@ export default function Dashboard() {
         </div>
         <div className="mt-6">
           <button
-            onClick={handleContactInfoSubmit}
+            type="submit"
             disabled={isLoading || !hasChanges}
             className={`w-full py-2 px-4 rounded-md text-white font-medium ${
               isLoading || !hasChanges
@@ -256,7 +255,7 @@ export default function Dashboard() {
             {isLoading ? 'Updating...' : 'Update Contact Information'}
           </button>
         </div>
-      </div>
+      </form>
 
       {/* Add More Locations Section */}
       <div className="bg-white rounded-lg shadow-lg p-6">
