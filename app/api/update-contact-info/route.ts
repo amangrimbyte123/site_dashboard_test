@@ -8,22 +8,41 @@ export async function POST(request: Request) {
     
     // Read the existing JSON file
     const filePath = path.join(process.cwd(), 'components', 'Content', 'ContactInfo.json');
-    const existingData = JSON.parse(await fs.readFile(filePath, 'utf-8'));
     
-    // Merge the new data with existing data
-    const updatedData = {
-      ...existingData,
-      ...newData
-    };
-    
-    // Write the updated data back to the file
-    await fs.writeFile(filePath, JSON.stringify(updatedData, null, 2));
-    
-    return NextResponse.json({ success: true });
+    try {
+      const existingData = JSON.parse(await fs.readFile(filePath, 'utf-8'));
+      
+      // Merge the new data with existing data
+      const updatedData = {
+        ...existingData,
+        ...newData
+      };
+      
+      // Write the updated data back to the file
+      await fs.writeFile(filePath, JSON.stringify(updatedData, null, 2));
+      
+      // Verify the write operation
+      const verifyData = await fs.readFile(filePath, 'utf-8');
+      if (!verifyData) {
+        throw new Error('Write verification failed');
+      }
+      
+      return NextResponse.json({ 
+        success: true,
+        message: 'Contact information updated successfully',
+        data: updatedData
+      });
+    } catch (readError) {
+      console.error('Error reading/writing file:', readError);
+      return NextResponse.json(
+        { error: 'Failed to read or write contact information file' },
+        { status: 500 }
+      );
+    }
   } catch (error) {
-    console.error('Error updating contact info:', error);
+    console.error('Error processing request:', error);
     return NextResponse.json(
-      { error: 'Failed to update contact information' },
+      { error: 'Failed to process contact information update' },
       { status: 500 }
     );
   }

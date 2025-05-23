@@ -86,13 +86,22 @@ export default function Dashboard() {
         body: JSON.stringify(contactInfo),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error('Failed to update contact information');
+        throw new Error(data.error || 'Failed to update contact information');
       }
 
-      alert('Contact information updated successfully');
-      setHasChanges(false);
+      if (data.success) {
+        alert('Contact information updated successfully');
+        setHasChanges(false);
+        // Refresh the contact info to ensure we have the latest data
+        await fetchContactInfo();
+      } else {
+        throw new Error('Update operation did not complete successfully');
+      }
     } catch (error) {
+      console.error('Update error:', error);
       alert(error instanceof Error ? error.message : 'Failed to update contact information');
     } finally {
       setIsLoading(false);
