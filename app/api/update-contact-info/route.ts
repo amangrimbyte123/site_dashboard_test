@@ -12,14 +12,28 @@ export async function POST(request: Request) {
       const fileContent = await fs.readFile(filePath, 'utf-8');
       const existingData = JSON.parse(fileContent);
       
+      // Validate the new data
+      if (!newData || typeof newData !== 'object') {
+        return NextResponse.json(
+          { error: 'Invalid data format' },
+          { status: 400 }
+        );
+      }
+
       // Merge the new data with existing data
       const updatedData = {
         ...existingData,
         ...newData
       };
       
-      // Write the updated data back to the file
-      await fs.writeFile(filePath, JSON.stringify(updatedData, null, 2));
+      // Create a temporary file path
+      const tempFilePath = `${filePath}.tmp`;
+      
+      // Write to temporary file first
+      await fs.writeFile(tempFilePath, JSON.stringify(updatedData, null, 2));
+      
+      // Rename temporary file to original file (atomic operation)
+      await fs.rename(tempFilePath, filePath);
       
       return NextResponse.json({ 
         success: true,
@@ -28,16 +42,26 @@ export async function POST(request: Request) {
       });
     } catch (fileError) {
       console.error('Error handling file operations:', fileError);
+      
+      // Try to clean up temporary file if it exists
+      try {
+        const tempFilePath = `${filePath}.tmp`;
+        await fs.access(tempFilePath);
+        await fs.unlink(tempFilePath);
+      } catch (cleanupError) {
+        // Ignore cleanup errors
+      }
+      
       return NextResponse.json(
-        { error: 'Failed to update contact information' },
+        { error: 'Failed to update contact information. Please try again.' },
         { status: 500 }
       );
     }
   } catch (error) {
     console.error('Error processing request:', error);
     return NextResponse.json(
-      { error: 'Failed to process contact information update' },
-      { status: 500 }
+      { error: 'Invalid request format' },
+      { status: 400 }
     );
   }
 } 
