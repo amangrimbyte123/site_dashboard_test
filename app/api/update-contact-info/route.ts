@@ -1,62 +1,26 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs/promises';
-import path from 'path';
 
 export async function POST(request: Request) {
   try {
     const newData = await request.json();
-    const filePath = path.join(process.cwd(), 'components/Content/ContactInfo.json');
     
-    try {
-      // Read existing data
-      const fileContent = await fs.readFile(filePath, 'utf-8');
-      const existingData = JSON.parse(fileContent);
-      
-      // Validate the new data
-      if (!newData || typeof newData !== 'object') {
-        return NextResponse.json(
-          { error: 'Invalid data format' },
-          { status: 400 }
-        );
-      }
-
-      // Merge the new data with existing data
-      const updatedData = {
-        ...existingData,
-        ...newData
-      };
-      
-      // Create a temporary file path
-      const tempFilePath = `${filePath}.tmp`;
-      
-      // Write to temporary file first
-      await fs.writeFile(tempFilePath, JSON.stringify(updatedData, null, 2));
-      
-      // Rename temporary file to original file (atomic operation)
-      await fs.rename(tempFilePath, filePath);
-      
-      return NextResponse.json({ 
-        success: true,
-        message: 'Contact information updated successfully',
-        data: updatedData
-      });
-    } catch (fileError) {
-      console.error('Error handling file operations:', fileError);
-      
-      // Try to clean up temporary file if it exists
-      try {
-        const tempFilePath = `${filePath}.tmp`;
-        await fs.access(tempFilePath);
-        await fs.unlink(tempFilePath);
-      } catch (cleanupError) {
-        // Ignore cleanup errors
-      }
-      
+    // Validate the new data
+    if (!newData || typeof newData !== 'object') {
       return NextResponse.json(
-        { error: 'Failed to update contact information. Please try again.' },
-        { status: 500 }
+        { error: 'Invalid data format' },
+        { status: 400 }
       );
     }
+
+    // In a production environment, you would update these values in your deployment platform
+    // For Vercel, you would update them in the Vercel dashboard or using the Vercel CLI
+    console.log('Contact information update requested:', newData);
+    
+    return NextResponse.json({ 
+      success: true,
+      message: 'Contact information update request received. Please update the values in your deployment platform.',
+      data: newData
+    });
   } catch (error) {
     console.error('Error processing request:', error);
     return NextResponse.json(

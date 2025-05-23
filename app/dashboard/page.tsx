@@ -93,7 +93,7 @@ export default function Dashboard() {
       }
 
       if (data.success) {
-        alert('Contact information updated successfully');
+        alert('Contact information update request received. Please update the values in your deployment platform (Vercel dashboard).');
         setHasChanges(false);
         // Refresh the contact info to ensure we have the latest data
         await fetchContactInfo();
