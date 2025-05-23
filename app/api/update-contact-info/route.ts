@@ -27,16 +27,37 @@ export async function POST(request: Request) {
       
       // Ensure the directory exists
       const dirPath = path.dirname(filePath);
-      await fs.mkdir(dirPath, { recursive: true });
+      try {
+        await fs.mkdir(dirPath, { recursive: true });
+      } catch (mkdirError) {
+        console.log('Directory might already exist:', mkdirError);
+      }
       
-      // Write the updated data back to the file
-      await fs.writeFile(filePath, JSON.stringify(updatedData, null, 2));
-      
-      return NextResponse.json({ 
-        success: true,
-        message: 'Contact information updated successfully',
-        data: updatedData
-      });
+      // Write the updated data back to the file with proper error handling
+      try {
+        await fs.writeFile(filePath, JSON.stringify(updatedData, null, 2), {
+          encoding: 'utf-8',
+          flag: 'w'
+        });
+        
+        // Verify the write operation
+        const verifyContent = await fs.readFile(filePath, 'utf-8');
+        if (!verifyContent) {
+          throw new Error('Write verification failed');
+        }
+        
+        return NextResponse.json({ 
+          success: true,
+          message: 'Contact information updated successfully',
+          data: updatedData
+        });
+      } catch (writeError) {
+        console.error('Write operation failed:', writeError);
+        return NextResponse.json(
+          { error: 'Failed to write contact information file' },
+          { status: 500 }
+        );
+      }
     } catch (fileError) {
       console.error('Error handling file operations:', fileError);
       return NextResponse.json(

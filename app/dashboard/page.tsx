@@ -102,7 +102,7 @@ export default function Dashboard() {
       }
     } catch (error) {
       console.error('Update error:', error);
-      alert(error instanceof Error ? error.message : 'Failed to update contact information');
+      alert(error instanceof Error ? error.message : 'Failed to update contact information. Please try again.');
     } finally {
       setIsLoading(false);
     }
