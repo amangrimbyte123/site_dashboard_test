@@ -1,18 +1,12 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs/promises';
-import path from 'path';
+import { kv } from '@vercel/kv';
 
 export async function GET() {
   try {
-    // Use the correct path for Vercel deployment
-    const filePath = path.join(process.cwd(), 'components', 'Content', 'ContactInfo.json');
+    const data = await kv.get('contact-info');
     
-    try {
-      const data = await fs.readFile(filePath, 'utf-8');
-      return NextResponse.json(JSON.parse(data));
-    } catch (readError) {
-      console.error('Error reading file:', readError);
-      // Return empty data structure if file doesn't exist
+    if (!data) {
+      // Return empty data structure if no data exists
       return NextResponse.json({
         No: '',
         tel: '',
@@ -28,6 +22,8 @@ export async function GET() {
         logoImage: ''
       });
     }
+    
+    return NextResponse.json(data);
   } catch (error) {
     console.error('Error in get-contact-info:', error);
     return NextResponse.json(
