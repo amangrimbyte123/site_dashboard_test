@@ -1,13 +1,16 @@
 import { NextResponse } from 'next/server';
-import { kv } from '@vercel/kv';
+import fs from 'fs/promises';
+import path from 'path';
 
 export async function POST(request: Request) {
   try {
     const newData = await request.json();
+    const filePath = path.join(process.cwd(), 'components/Content/ContactInfo.json');
     
     try {
-      // Try to get existing data from KV store
-      let existingData = await kv.get('contact-info') || {};
+      // Read existing data
+      const fileContent = await fs.readFile(filePath, 'utf-8');
+      const existingData = JSON.parse(fileContent);
       
       // Merge the new data with existing data
       const updatedData = {
@@ -15,16 +18,16 @@ export async function POST(request: Request) {
         ...newData
       };
       
-      // Store the updated data in KV
-      await kv.set('contact-info', updatedData);
+      // Write the updated data back to the file
+      await fs.writeFile(filePath, JSON.stringify(updatedData, null, 2));
       
       return NextResponse.json({ 
         success: true,
         message: 'Contact information updated successfully',
         data: updatedData
       });
-    } catch (kvError) {
-      console.error('Error handling KV operations:', kvError);
+    } catch (fileError) {
+      console.error('Error handling file operations:', fileError);
       return NextResponse.json(
         { error: 'Failed to update contact information' },
         { status: 500 }
