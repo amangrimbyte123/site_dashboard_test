@@ -33,9 +33,6 @@ export default function Dashboard() {
     bannerImage: '',
     logoImage: ''
   });
-  const [jsonData, setJsonData] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -47,7 +44,10 @@ export default function Dashboard() {
     }
 
     // Fetch contact info
-    fetchContactInfo();
+    fetch('/api/get-contact-info')
+      .then(res => res.json())
+      .then(data => setContactInfo(data))
+      .catch(() => alert('Failed to load data'));
   }, [router]);
 
   const handleLogout = () => {
@@ -55,233 +55,138 @@ export default function Dashboard() {
     router.push('/login');
   };
 
-  const fetchContactInfo = async () => {
-    try {
-      const response = await fetch('/api/get-contact-info');
-      if (response.ok) {
-        const data = await response.json();
-        setContactInfo(data);
-      } else {
-        throw new Error('Failed to fetch contact information');
-      }
-    } catch (error) {
-      console.error('Error fetching contact info:', error);
-      alert('Failed to fetch contact information');
-    }
-  };
-
-  const handleContactInfoChange = (field: keyof ContactInfo, value: string) => {
-    setContactInfo(prev => ({
-      ...prev,
-      [field]: value
-    }));
-    setHasChanges(true);
-  };
-
-  const handleContactInfoSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      setIsLoading(true);
       const response = await fetch('/api/update-contact-info', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(contactInfo),
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to update contact information');
+      if (response.ok) {
+        alert('Data saved!');
+      } else {
+        alert('Failed to save data');
       }
-
-      alert('Contact information updated successfully');
-      setHasChanges(false);
-      await fetchContactInfo();
     } catch (error) {
-      console.error('Update error:', error);
-      alert(error instanceof Error ? error.message : 'Failed to update contact information');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleLocationSubmit = async () => {
-    try {
-      setIsLoading(true);
-      const parsedData = JSON.parse(jsonData);
-      
-      const response = await fetch('/api/update-content', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(parsedData),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update content');
-      }
-
-      alert('Location added successfully');
-      setJsonData('');
-    } catch (error) {
-      alert(error instanceof Error ? error.message : 'Invalid JSON format');
-    } finally {
-      setIsLoading(false);
+      alert('Failed to save data');
     }
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-8">
+    <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
+        <h1 className="text-2xl font-bold">Dashboard</h1>
         <button
           onClick={handleLogout}
-          className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+          className="px-4 py-2 bg-red-600 text-white rounded"
         >
           Logout
         </button>
       </div>
 
-      {/* Contact Information Section */}
-      <form onSubmit={handleContactInfoSubmit} className="bg-white rounded-lg shadow-lg p-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">Contact Information</h1>
-        </div>
+      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6">
+        <h2 className="text-xl font-bold mb-4">Contact Information</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">Phone Number</label>
+          <div>
+            <label className="block mb-1">Phone Number</label>
             <input
               type="text"
               value={contactInfo.No}
-              onChange={(e) => handleContactInfoChange('No', e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={(e) => setContactInfo({ ...contactInfo, No: e.target.value })}
+              className="w-full p-2 border rounded"
             />
           </div>
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">Telephone</label>
+          <div>
+            <label className="block mb-1">Telephone</label>
             <input
               type="text"
               value={contactInfo.tel}
-              onChange={(e) => handleContactInfoChange('tel', e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={(e) => setContactInfo({ ...contactInfo, tel: e.target.value })}
+              className="w-full p-2 border rounded"
             />
           </div>
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">Email</label>
+          <div>
+            <label className="block mb-1">Email</label>
             <input
               type="email"
               value={contactInfo.mail}
-              onChange={(e) => handleContactInfoChange('mail', e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={(e) => setContactInfo({ ...contactInfo, mail: e.target.value })}
+              className="w-full p-2 border rounded"
             />
           </div>
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">Business Name</label>
+          <div>
+            <label className="block mb-1">Business Name</label>
             <input
               type="text"
               value={contactInfo.name}
-              onChange={(e) => handleContactInfoChange('name', e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={(e) => setContactInfo({ ...contactInfo, name: e.target.value })}
+              className="w-full p-2 border rounded"
             />
           </div>
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">Address</label>
+          <div>
+            <label className="block mb-1">Address</label>
             <input
               type="text"
               value={contactInfo.address}
-              onChange={(e) => handleContactInfoChange('address', e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={(e) => setContactInfo({ ...contactInfo, address: e.target.value })}
+              className="w-full p-2 border rounded"
             />
           </div>
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">Service</label>
+          <div>
+            <label className="block mb-1">Service</label>
             <input
               type="text"
               value={contactInfo.service}
-              onChange={(e) => handleContactInfoChange('service', e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={(e) => setContactInfo({ ...contactInfo, service: e.target.value })}
+              className="w-full p-2 border rounded"
             />
           </div>
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">Location</label>
+          <div>
+            <label className="block mb-1">Location</label>
             <input
               type="text"
               value={contactInfo.location}
-              onChange={(e) => handleContactInfoChange('location', e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={(e) => setContactInfo({ ...contactInfo, location: e.target.value })}
+              className="w-full p-2 border rounded"
             />
           </div>
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">Zip Code</label>
+          <div>
+            <label className="block mb-1">Zip Code</label>
             <input
               type="text"
               value={contactInfo.zipCode}
-              onChange={(e) => handleContactInfoChange('zipCode', e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={(e) => setContactInfo({ ...contactInfo, zipCode: e.target.value })}
+              className="w-full p-2 border rounded"
             />
           </div>
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">Banner Image URL</label>
+          <div>
+            <label className="block mb-1">Banner Image URL</label>
             <input
               type="text"
               value={contactInfo.bannerImage}
-              onChange={(e) => handleContactInfoChange('bannerImage', e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={(e) => setContactInfo({ ...contactInfo, bannerImage: e.target.value })}
+              className="w-full p-2 border rounded"
             />
           </div>
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">Logo Image URL</label>
+          <div>
+            <label className="block mb-1">Logo Image URL</label>
             <input
               type="text"
               value={contactInfo.logoImage}
-              onChange={(e) => handleContactInfoChange('logoImage', e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={(e) => setContactInfo({ ...contactInfo, logoImage: e.target.value })}
+              className="w-full p-2 border rounded"
             />
           </div>
         </div>
-        <div className="mt-6">
-          <button
-            type="submit"
-            disabled={isLoading || !hasChanges}
-            className={`w-full py-2 px-4 rounded-md text-white font-medium ${
-              isLoading || !hasChanges
-                ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-blue-600 hover:bg-blue-700'
-            }`}
-          >
-            {isLoading ? 'Updating...' : 'Update Contact Information'}
-          </button>
-        </div>
+        <button
+          type="submit"
+          className="w-full mt-4 py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
+          Save
+        </button>
       </form>
-
-      {/* Add More Locations Section */}
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">Add More Locations</h1>
-        </div>
-        <div className="space-y-4">
-          <textarea
-            placeholder="Paste your JSON data here..."
-            value={jsonData}
-            onChange={(e) => setJsonData(e.target.value)}
-            className="w-full min-h-[300px] p-4 border border-gray-300 rounded-md font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-          <button
-            onClick={handleLocationSubmit}
-            disabled={isLoading || !jsonData.trim()}
-            className={`w-full py-2 px-4 rounded-md text-white font-medium ${
-              isLoading || !jsonData.trim()
-                ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-blue-600 hover:bg-blue-700'
-            }`}
-          >
-            {isLoading ? 'Submitting...' : 'Add Location'}
-          </button>
-        </div>
-      </div>
     </div>
   );
 } 
